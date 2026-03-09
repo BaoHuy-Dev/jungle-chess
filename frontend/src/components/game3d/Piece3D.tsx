@@ -1,6 +1,6 @@
-import { useRef, useMemo, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useGLTF } from '@react-three/drei';
+import { useGLTF, Clone } from '@react-three/drei';
 import * as THREE from 'three';
 import type { PieceData } from '../../store/gameStore';
 
@@ -18,27 +18,11 @@ const ANIMAL_ACCENTS: Record<string, { color: string; emissive: string }> = {
     rat: { color: '#F39C12', emissive: '#B7770D' },   // Brave gold
 };
 
-
 // ─── Custom GLB Models ──────────────────────────────────────────────
 function CustomModel({ url, scale = 0.5, yOffset = 0 }: { url: string; scale?: number; yOffset?: number }) {
     const gltf = useGLTF(url);
-    const copiedScene = useMemo(() => {
-        if (!gltf || !gltf.scene) return new THREE.Group();
-        return gltf.scene.clone(true); // deep clone to preserve all materials & textures
-    }, [gltf]);
 
-    // Just enable shadows, keep original materials 100% intact
-    useEffect(() => {
-        if (!copiedScene) return;
-        copiedScene.traverse((child) => {
-            if ((child as THREE.Mesh).isMesh) {
-                child.castShadow = true;
-                child.receiveShadow = true;
-            }
-        });
-    }, [copiedScene]);
-
-    return <primitive object={copiedScene} scale={scale} position={[0, yOffset, 0]} />;
+    return <Clone object={gltf.scene} scale={scale} position={[0, yOffset, 0]} castShadow receiveShadow />;
 }
 
 // Preload all models
@@ -130,248 +114,6 @@ const MATERIALS = {
     }),
 };
 
-// ─── Per-Animal Weapon & Armor Meshes ───────────────────────────────
-function AnimalWeapons({ type }: { type: string }) {
-    const accent = ANIMAL_ACCENTS[type] || { color: '#888', emissive: '#444' };
-
-    switch (type) {
-        case 'elephant':
-            return (
-                <group>
-                    {/* Heavy battle tusks with ancient engravings */}
-                    <mesh position={[-0.18, 0.28, 0.08]} rotation={[0.3, 0, 0.35]} castShadow>
-                        <coneGeometry args={[0.025, 0.22, 6]} />
-                        <meshStandardMaterial color="#f5f0d0" metalness={0.4} roughness={0.35} />
-                    </mesh>
-                    <mesh position={[0.18, 0.28, 0.08]} rotation={[0.3, 0, -0.35]} castShadow>
-                        <coneGeometry args={[0.025, 0.22, 6]} />
-                        <meshStandardMaterial color="#f5f0d0" metalness={0.4} roughness={0.35} />
-                    </mesh>
-                    {/* Massive armored shoulder plates */}
-                    <mesh position={[-0.15, 0.35, -0.02]} rotation={[0, 0, 0.4]} castShadow>
-                        <boxGeometry args={[0.14, 0.06, 0.1]} />
-                        <meshStandardMaterial color={accent.color} metalness={0.85} roughness={0.25}
-                            emissive={accent.emissive} emissiveIntensity={0.3} />
-                    </mesh>
-                    <mesh position={[0.15, 0.35, -0.02]} rotation={[0, 0, -0.4]} castShadow>
-                        <boxGeometry args={[0.14, 0.06, 0.1]} />
-                        <meshStandardMaterial color={accent.color} metalness={0.85} roughness={0.25}
-                            emissive={accent.emissive} emissiveIntensity={0.3} />
-                    </mesh>
-                    {/* Battle helm crest */}
-                    <mesh position={[0, 0.48, -0.04]} castShadow>
-                        <boxGeometry args={[0.04, 0.08, 0.16]} />
-                        <meshStandardMaterial color="#5a4a3a" metalness={0.7} roughness={0.3} />
-                    </mesh>
-                </group>
-            );
-        case 'lion':
-            return (
-                <group>
-                    {/* Golden crown with jewels */}
-                    <mesh position={[0, 0.5, 0]} castShadow>
-                        <cylinderGeometry args={[0.1, 0.12, 0.035, 6]} />
-                        <meshStandardMaterial color="#DAA520" metalness={0.95} roughness={0.1}
-                            emissive="#8B6914" emissiveIntensity={0.6} />
-                    </mesh>
-                    {[0, 1, 2, 3, 4].map(i => (
-                        <mesh key={`crown-${i}`}
-                            position={[Math.cos(i * Math.PI * 2 / 5) * 0.1, 0.55, Math.sin(i * Math.PI * 2 / 5) * 0.1]}
-                            castShadow>
-                            <coneGeometry args={[0.018, 0.06, 4]} />
-                            <meshStandardMaterial color="#ffd700" metalness={0.95} roughness={0.08}
-                                emissive="#ffd700" emissiveIntensity={0.5} />
-                        </mesh>
-                    ))}
-                    {/* Massive greatsword */}
-                    <mesh position={[0.22, 0.3, 0]} rotation={[0, 0, 0.15]} castShadow>
-                        <boxGeometry args={[0.028, 0.42, 0.008]} />
-                        <meshStandardMaterial color="#d0d0d0" metalness={0.95} roughness={0.12} />
-                    </mesh>
-                    {/* Sword crossguard */}
-                    <mesh position={[0.21, 0.12, 0]} rotation={[0, 0, 0.15]} castShadow>
-                        <boxGeometry args={[0.1, 0.018, 0.018]} />
-                        <meshStandardMaterial color="#DAA520" metalness={0.9} roughness={0.15}
-                            emissive="#8B6914" emissiveIntensity={0.3} />
-                    </mesh>
-                    {/* Heavy armor chestplate */}
-                    <mesh position={[0, 0.3, 0.04]} castShadow>
-                        <boxGeometry args={[0.18, 0.14, 0.04]} />
-                        <meshStandardMaterial color="#DAA520" metalness={0.85} roughness={0.2}
-                            emissive="#8B6914" emissiveIntensity={0.2} />
-                    </mesh>
-                </group>
-            );
-        case 'tiger':
-            return (
-                <group>
-                    {/* Flaming dual blades */}
-                    <mesh position={[-0.18, 0.3, 0.03]} rotation={[0.1, 0, 0.25]} castShadow>
-                        <boxGeometry args={[0.02, 0.32, 0.005]} />
-                        <meshStandardMaterial color="#ff6633" metalness={0.8} roughness={0.15}
-                            emissive="#ff3300" emissiveIntensity={0.8} />
-                    </mesh>
-                    <mesh position={[0.18, 0.3, 0.03]} rotation={[0.1, 0, -0.25]} castShadow>
-                        <boxGeometry args={[0.02, 0.32, 0.005]} />
-                        <meshStandardMaterial color="#ff6633" metalness={0.8} roughness={0.15}
-                            emissive="#ff3300" emissiveIntensity={0.8} />
-                    </mesh>
-                    {/* Flame glow on blades */}
-                    <mesh position={[-0.18, 0.38, 0.03]}>
-                        <sphereGeometry args={[0.04, 8, 8]} />
-                        <meshBasicMaterial color="#ff4400" transparent opacity={0.4} />
-                    </mesh>
-                    <mesh position={[0.18, 0.38, 0.03]}>
-                        <sphereGeometry args={[0.04, 8, 8]} />
-                        <meshBasicMaterial color="#ff4400" transparent opacity={0.4} />
-                    </mesh>
-                    {/* Glowing rune armor */}
-                    <mesh position={[0, 0.28, 0.04]} castShadow>
-                        <boxGeometry args={[0.16, 0.1, 0.03]} />
-                        <meshStandardMaterial color="#444" metalness={0.9} roughness={0.2}
-                            emissive={accent.emissive} emissiveIntensity={0.4} />
-                    </mesh>
-                </group>
-            );
-        case 'leopard':
-            return (
-                <group>
-                    {/* Dual magical daggers */}
-                    <mesh position={[-0.15, 0.25, 0.06]} rotation={[0.3, 0, 0.5]} castShadow>
-                        <coneGeometry args={[0.012, 0.18, 4]} />
-                        <meshStandardMaterial color="#bb88ff" metalness={0.85} roughness={0.15}
-                            emissive="#9944ff" emissiveIntensity={0.7} />
-                    </mesh>
-                    <mesh position={[0.15, 0.25, 0.06]} rotation={[0.3, 0, -0.5]} castShadow>
-                        <coneGeometry args={[0.012, 0.18, 4]} />
-                        <meshStandardMaterial color="#bb88ff" metalness={0.85} roughness={0.15}
-                            emissive="#9944ff" emissiveIntensity={0.7} />
-                    </mesh>
-                    {/* Dagger energy glow */}
-                    <pointLight position={[-0.15, 0.3, 0.06]} intensity={0.3} color="#9944ff" distance={0.5} />
-                    <pointLight position={[0.15, 0.3, 0.06]} intensity={0.3} color="#9944ff" distance={0.5} />
-                    {/* Light stealth armor */}
-                    <mesh position={[0, 0.26, 0.02]} castShadow>
-                        <boxGeometry args={[0.12, 0.08, 0.025]} />
-                        <meshStandardMaterial color="#2a2040" metalness={0.7} roughness={0.3}
-                            emissive="#6C3483" emissiveIntensity={0.3} />
-                    </mesh>
-                </group>
-            );
-        case 'wolf':
-            return (
-                <group>
-                    {/* Large battle axe handle */}
-                    <mesh position={[0.2, 0.28, 0]} rotation={[0, 0, 0.2]} castShadow>
-                        <cylinderGeometry args={[0.012, 0.012, 0.38, 6]} />
-                        <meshStandardMaterial color="#5C3A1E" roughness={0.8} metalness={0.2} />
-                    </mesh>
-                    {/* Axe blade */}
-                    <mesh position={[0.24, 0.44, 0]} rotation={[0, 0, 0.2]} castShadow>
-                        <boxGeometry args={[0.12, 0.08, 0.01]} />
-                        <meshStandardMaterial color="#888" metalness={0.95} roughness={0.15}
-                            emissive="#515A5A" emissiveIntensity={0.2} />
-                    </mesh>
-                    {/* Spiked shoulder armor */}
-                    <mesh position={[-0.14, 0.35, 0]} rotation={[0, 0, 0.3]} castShadow>
-                        <coneGeometry args={[0.04, 0.08, 4]} />
-                        <meshStandardMaterial color="#666" metalness={0.9} roughness={0.2} />
-                    </mesh>
-                    <mesh position={[0.06, 0.38, -0.04]} castShadow>
-                        <coneGeometry args={[0.03, 0.06, 4]} />
-                        <meshStandardMaterial color="#666" metalness={0.9} roughness={0.2} />
-                    </mesh>
-                </group>
-            );
-        case 'dog':
-            return (
-                <group>
-                    {/* Spear */}
-                    <mesh position={[0.18, 0.3, 0]} rotation={[0, 0, 0.12]} castShadow>
-                        <cylinderGeometry args={[0.01, 0.01, 0.4, 6]} />
-                        <meshStandardMaterial color="#5C3A1E" roughness={0.8} metalness={0.2} />
-                    </mesh>
-                    {/* Spear tip */}
-                    <mesh position={[0.2, 0.52, 0]} rotation={[0, 0, 0.12]} castShadow>
-                        <coneGeometry args={[0.02, 0.06, 4]} />
-                        <meshStandardMaterial color="#ccc" metalness={0.95} roughness={0.12} />
-                    </mesh>
-                    {/* Shield */}
-                    <mesh position={[-0.16, 0.28, 0.06]} rotation={[0, 0.3, 0]} castShadow>
-                        <cylinderGeometry args={[0.1, 0.1, 0.015, 8]} />
-                        <meshStandardMaterial color={accent.color} metalness={0.7} roughness={0.3}
-                            emissive={accent.emissive} emissiveIntensity={0.3} />
-                    </mesh>
-                    {/* Shield boss */}
-                    <mesh position={[-0.16, 0.28, 0.07]} rotation={[0, 0.3, 0]}>
-                        <sphereGeometry args={[0.03, 8, 8]} />
-                        <meshStandardMaterial color="#ddd" metalness={0.9} roughness={0.15} />
-                    </mesh>
-                    {/* Protective armor */}
-                    <mesh position={[0, 0.28, 0.02]} castShadow>
-                        <boxGeometry args={[0.14, 0.1, 0.025]} />
-                        <meshStandardMaterial color="#3a5577" metalness={0.7} roughness={0.3} />
-                    </mesh>
-                </group>
-            );
-        case 'cat':
-            return (
-                <group>
-                    {/* Hood */}
-                    <mesh position={[0, 0.48, -0.03]} castShadow>
-                        <sphereGeometry args={[0.08, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2]} />
-                        <meshStandardMaterial color="#2a3a2a" roughness={0.8} metalness={0.2} />
-                    </mesh>
-                    {/* Curved daggers with magical glow */}
-                    <mesh position={[-0.14, 0.24, 0.06]} rotation={[0.4, 0.2, 0.6]} castShadow>
-                        <coneGeometry args={[0.01, 0.15, 4]} />
-                        <meshStandardMaterial color="#55ff77" metalness={0.8} roughness={0.15}
-                            emissive="#22aa44" emissiveIntensity={0.6} />
-                    </mesh>
-                    <mesh position={[0.14, 0.24, 0.06]} rotation={[0.4, -0.2, -0.6]} castShadow>
-                        <coneGeometry args={[0.01, 0.15, 4]} />
-                        <meshStandardMaterial color="#55ff77" metalness={0.8} roughness={0.15}
-                            emissive="#22aa44" emissiveIntensity={0.6} />
-                    </mesh>
-                    {/* Light armor with stealth pattern */}
-                    <mesh position={[0, 0.26, 0.02]} castShadow>
-                        <boxGeometry args={[0.1, 0.07, 0.02]} />
-                        <meshStandardMaterial color="#1a2a1a" metalness={0.5} roughness={0.4}
-                            emissive="#1E8449" emissiveIntensity={0.2} />
-                    </mesh>
-                </group>
-            );
-        case 'rat':
-            return (
-                <group>
-                    {/* Short sword */}
-                    <mesh position={[0.12, 0.22, 0.03]} rotation={[0.1, 0, -0.2]} castShadow>
-                        <boxGeometry args={[0.015, 0.16, 0.004]} />
-                        <meshStandardMaterial color="#ccc" metalness={0.9} roughness={0.15} />
-                    </mesh>
-                    {/* Sword handle */}
-                    <mesh position={[0.11, 0.14, 0.03]} rotation={[0.1, 0, -0.2]} castShadow>
-                        <boxGeometry args={[0.05, 0.012, 0.012]} />
-                        <meshStandardMaterial color="#F39C12" metalness={0.8} roughness={0.25}
-                            emissive="#B7770D" emissiveIntensity={0.3} />
-                    </mesh>
-                    {/* Tiny shield */}
-                    <mesh position={[-0.1, 0.2, 0.05]} rotation={[0, 0.3, 0]} castShadow>
-                        <cylinderGeometry args={[0.06, 0.06, 0.01, 6]} />
-                        <meshStandardMaterial color={accent.color} metalness={0.7} roughness={0.3}
-                            emissive={accent.emissive} emissiveIntensity={0.3} />
-                    </mesh>
-                    {/* Tiny armor */}
-                    <mesh position={[0, 0.19, 0.02]} castShadow>
-                        <boxGeometry args={[0.08, 0.05, 0.018]} />
-                        <meshStandardMaterial color="#887755" metalness={0.6} roughness={0.35} />
-                    </mesh>
-                </group>
-            );
-        default:
-            return null;
-    }
-}
 
 // ─── Dark Fantasy Warrior Chess Piece ───────────────────────────────
 export function Piece3D({
@@ -387,7 +129,7 @@ export function Piece3D({
 }) {
     const groupRef = useRef<THREE.Group>(null);
     const runeRef = useRef<THREE.Mesh>(null);
-    const auraRef = useRef<THREE.Mesh>(null);
+    const targetRotRef = useRef<number>(piece.side === 'RED' ? 0 : Math.PI);
     const [hovered, setHovered] = useState(false);
 
     const targetX = (piece.col - 3) * CELL_SIZE;
@@ -409,11 +151,28 @@ export function Piece3D({
         const targetY = isActive ? 0.35 : (hovered ? 0.18 : 0.0);
         g.position.y = THREE.MathUtils.lerp(g.position.y, targetY, delta * 8);
 
+        // Directional Facing
+        const dx = targetX - g.position.x;
+        const dz = targetZ - g.position.z;
+        const distSq = dx * dx + dz * dz;
+
+        // If moving significantly, face the direction of movement
+        if (distSq > 0.001) {
+            targetRotRef.current = Math.atan2(dx, dz);
+        } else if (!isActive && distSq < 0.0001) {
+            // Revert to facing the opponent when stopping
+            targetRotRef.current = piece.side === 'RED' ? 0 : Math.PI;
+        }
+
         // Battle stance rotation
         if (isActive) {
             g.rotation.y += delta * 1.8;
         } else {
-            g.rotation.y = THREE.MathUtils.lerp(g.rotation.y, piece.side === 'RED' ? Math.PI : 0, delta * 10);
+            // Smoothly interpolate rotation avoiding spinning the long way around
+            let diff = targetRotRef.current - g.rotation.y;
+            // Normalize angle difference to [-PI, PI]
+            diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+            g.rotation.y += diff * delta * 15;
         }
 
         // Warrior breathing - subtle power pulse
@@ -425,13 +184,6 @@ export function Piece3D({
             const mat = runeRef.current.material as THREE.MeshStandardMaterial;
             mat.emissiveIntensity = 0.8 + Math.sin(t * 3 + piece.row) * 0.5;
             runeRef.current.rotation.z = t * 0.5;
-        }
-
-        // Aura pulse
-        if (auraRef.current) {
-            const pulse = 0.3 + Math.sin(t * 2) * 0.15;
-            (auraRef.current.material as THREE.MeshBasicMaterial).opacity = pulse;
-            auraRef.current.scale.setScalar(1 + Math.sin(t * 1.5) * 0.05);
         }
     });
 
@@ -508,40 +260,16 @@ export function Piece3D({
             {/* Upright Custom 3D Model */}
             <CustomModel
                 url={GLB_URLS[piece.type] || '/models/elephant.glb'}
-                scale={piece.type === 'elephant' ? 0.4 : 0.4}
+                scale={0.95}
                 yOffset={0.08}
             />
 
-            {/* Per-Animal Weapon & Armor Equipment */}
-            {piece.alive && <AnimalWeapons type={piece.type} />}
-
-            {/* Warrior Aura - subtle power emanation */}
-            {piece.alive && (
-                <mesh ref={auraRef} position={[0, 0.25, 0]}>
-                    <sphereGeometry args={[0.4, 16, 16]} />
-                    <meshBasicMaterial
-                        color={sideColor}
-                        transparent
-                        opacity={0.15}
-                        side={THREE.BackSide}
-                        depthWrite={false}
-                    />
-                </mesh>
-            )}
-
             {/* Active Selection - Glowing Battle Ring */}
             {isActive && (
-                <>
-                    <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                        <ringGeometry args={[0.45, 0.55, 32]} />
-                        <meshBasicMaterial color={sideColor} transparent opacity={0.7} side={THREE.DoubleSide} />
-                    </mesh>
-                    {/* Upward energy pillar */}
-                    <mesh position={[0, 0.5, 0]}>
-                        <cylinderGeometry args={[0.02, 0.15, 0.8, 8]} />
-                        <meshBasicMaterial color={sideColor} transparent opacity={0.25} />
-                    </mesh>
-                </>
+                <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                    <ringGeometry args={[0.45, 0.55, 32]} />
+                    <meshBasicMaterial color={sideColor} transparent opacity={0.7} side={THREE.DoubleSide} />
+                </mesh>
             )}
 
             {/* Hover glow ring */}

@@ -15,6 +15,7 @@ function getAudioContext(): AudioContext {
 
 let masterVolume = 0.5;
 let isMuted = false;
+let bgmAudio: HTMLAudioElement | null = null;
 
 function getVolume(): number {
     return isMuted ? 0 : masterVolume;
@@ -144,9 +145,28 @@ export const SoundManager = {
         setTimeout(() => playTone(880, 0.1, 'sine', 0.1), 80);
     },
 
+    // ─── Background Music ──────────────────────────────────────────
+    playBGM() {
+        if (!bgmAudio) {
+            bgmAudio = new Audio('/sounds/bgm.mp3');
+            bgmAudio.loop = true;
+            bgmAudio.volume = masterVolume * 0.4; // subtle background sound
+        }
+        bgmAudio.muted = isMuted;
+        bgmAudio.play().catch((e) => console.warn('BGM autoplay prevented by browser', e));
+    },
+
+    stopBGM() {
+        if (bgmAudio) {
+            bgmAudio.pause();
+            bgmAudio.currentTime = 0;
+        }
+    },
+
     // ─── Controls ──────────────────────────────────────────────────
     setVolume(vol: number) {
         masterVolume = Math.max(0, Math.min(1, vol));
+        if (bgmAudio) bgmAudio.volume = masterVolume * 0.4;
     },
 
     getVolume(): number {
@@ -155,6 +175,7 @@ export const SoundManager = {
 
     setMuted(muted: boolean) {
         isMuted = muted;
+        if (bgmAudio) bgmAudio.muted = muted;
     },
 
     isMuted(): boolean {
@@ -163,6 +184,7 @@ export const SoundManager = {
 
     toggleMute(): boolean {
         isMuted = !isMuted;
+        if (bgmAudio) bgmAudio.muted = isMuted;
         return isMuted;
     },
 

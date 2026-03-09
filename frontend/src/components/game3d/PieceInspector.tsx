@@ -1,5 +1,5 @@
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment, useGLTF, Center } from '@react-three/drei';
+import { OrbitControls, Environment, useGLTF, Center, Clone } from '@react-three/drei';
 
 import type { PieceData } from '../../store/gameStore';
 import { useLanguage, type TranslationKey } from '../../i18n';
@@ -28,7 +28,7 @@ function AnimalModel({ type }: { type: string }) {
 
     return (
         <Center>
-            <primitive object={gltf.scene.clone(true)} scale={type === 'elephant' ? 2.0 : 2.0} rotation={[0, Math.PI, 0]} />
+            <Clone object={gltf.scene} scale={type === 'elephant' ? 2.0 : 2.0} rotation={[0, Math.PI, 0]} />
         </Center>
     );
 }

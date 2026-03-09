@@ -35,6 +35,17 @@ export function GameHUD() {
         SoundManager.setMuted(!soundEnabled);
     }, [soundEnabled]);
 
+    // Play BGM during game
+    useEffect(() => {
+        // Only attempt to play if we just joined/started a game
+        if (gameState) {
+            SoundManager.playBGM();
+        }
+        return () => {
+            SoundManager.stopBGM();
+        };
+    }, [gameState?.gameId]);
+
     if (!gameState) return null;
 
     const redPieces = gameState.pieces.filter((p) => p.side === 'RED');

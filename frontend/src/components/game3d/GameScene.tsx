@@ -1,7 +1,7 @@
 import { useRef, useCallback, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, ContactShadows, Environment } from '@react-three/drei';
-import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
+import { EffectComposer, Bloom, Vignette, N8AO } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { Board3D } from './Board3D';
 import { Piece3D } from './Piece3D';
@@ -152,19 +152,17 @@ function SceneContent({ onInspect }: { onInspect: (piece: PieceData) => void }) 
                 shadow-camera-top={10}
                 shadow-camera-bottom={-10}
             />
-            {/* Warm fill light from side - torch-like */}
-            <pointLight position={[-6, 8, -6]} intensity={0.5} color="#ff8833" />
-            {/* Cool rim light - moonlight */}
-            <pointLight position={[7, 7, 7]} intensity={0.3} color="#3366aa" />
-            {/* Subtle jungle green ambient from below */}
-            <pointLight position={[0, 0.5, 0]} intensity={0.12} color="#224433" />
-            {/* Dramatic back light for silhouette effect */}
-            <directionalLight position={[-4, 10, -8]} intensity={0.3} color="#6688bb" />
+            {/* Warm sunlight */}
+            <directionalLight position={[10, 15, 10]} intensity={1.2} color="#fff8e7" castShadow />
+            {/* Bright ambient sky light */}
+            <ambientLight intensity={0.7} color="#d4e8f9" />
+            {/* Soft fill light */}
+            <pointLight position={[-10, 8, -10]} intensity={0.6} color="#f0f8ff" />
 
-            {/* Dark Jungle Sky & Atmosphere */}
-            <color attach="background" args={['#060a0e']} />
-            <fog attach="fog" args={['#060a0e', 10, 30]} />
-            <Environment preset="night" blur={0.8} />
+            {/* Bright Sky & Atmosphere */}
+            <color attach="background" args={['#c8e1f0']} />
+            <fog attach="fog" args={['#c8e1f0', 15, 35]} />
+            <Environment preset="forest" blur={0.6} />
 
             {/* Board */}
             <Board3D boardLayout={gameState.boardLayout} />
@@ -242,10 +240,11 @@ function SceneContent({ onInspect }: { onInspect: (piece: PieceData) => void }) 
                 dampingFactor={0.05}
             />
 
-            {/* Dark Fantasy Post Processing - AAA cinematic */}
+            {/* Post Processing - Bright and Crisp */}
             <EffectComposer>
-                <Bloom luminanceThreshold={0.7} mipmapBlur intensity={1.0} />
-                <Vignette eskil={false} offset={0.2} darkness={0.9} />
+                <N8AO aoRadius={0.5} intensity={1.5} />
+                <Bloom luminanceThreshold={0.8} mipmapBlur intensity={0.4} />
+                <Vignette eskil={false} offset={0.1} darkness={0.4} />
             </EffectComposer>
         </>
     );
