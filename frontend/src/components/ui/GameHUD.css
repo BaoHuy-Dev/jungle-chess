@@ -1,0 +1,405 @@
+.game-hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 10;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.game-hud>* {
+  pointer-events: auto;
+}
+
+/* Top bar */
+.hud-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0) 100%);
+}
+
+.hud-top-left,
+.hud-top-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hud-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #aaa;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+  transition: all 0.2s;
+  backdrop-filter: blur(8px);
+}
+
+.hud-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.sound-btn {
+  font-size: 18px;
+  padding: 4px 10px;
+  min-width: 40px;
+  text-align: center;
+}
+
+.game-id {
+  color: #888;
+  font-size: 12px;
+}
+
+.game-id .label {
+  margin-right: 4px;
+}
+
+.game-id .value {
+  color: #ffd700;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+  background: rgba(255, 215, 0, 0.08);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.turn-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.4s ease;
+}
+
+.turn-indicator.red-turn {
+  background: rgba(204, 34, 0, 0.25);
+  color: #ff6644;
+  border: 1px solid rgba(255, 51, 0, 0.35);
+}
+
+.turn-indicator.blue-turn {
+  background: rgba(0, 85, 204, 0.25);
+  color: #44aaff;
+  border: 1px solid rgba(0, 119, 255, 0.35);
+}
+
+.turn-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.red-turn .turn-dot {
+  background: #ff3300;
+  box-shadow: 0 0 8px #ff3300;
+}
+
+.blue-turn .turn-dot {
+  background: #0077ff;
+  box-shadow: 0 0 8px #0077ff;
+}
+
+.ai-thinking {
+  font-size: 12px;
+  color: #aaa;
+  animation: aiPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes aiPulse {
+
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.4);
+    opacity: 0.6;
+  }
+}
+
+.game-status {
+  color: #ccc;
+  font-size: 13px;
+}
+
+/* Player panels */
+.hud-player {
+  position: fixed;
+  top: 70px;
+  padding: 12px;
+  border-radius: 12px;
+  backdrop-filter: blur(16px);
+  min-width: 160px;
+}
+
+.hud-player-red {
+  left: 12px;
+  background: linear-gradient(135deg, rgba(140, 20, 0, 0.3), rgba(80, 10, 0, 0.15));
+  border: 1px solid rgba(255, 51, 0, 0.2);
+}
+
+.hud-player-blue {
+  right: 12px;
+  background: linear-gradient(135deg, rgba(0, 40, 140, 0.3), rgba(0, 20, 80, 0.15));
+  border: 1px solid rgba(0, 119, 255, 0.2);
+}
+
+.player-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.player-avatar {
+  font-size: 22px;
+  transition: all 0.3s;
+}
+
+.player-avatar.active-turn {
+  animation: activePulse 1.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+
+@keyframes activePulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+.player-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.player-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: #eee;
+}
+
+.piece-count {
+  font-size: 11px;
+  color: #999;
+}
+
+.captured-pieces {
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 6px;
+}
+
+.captured-label {
+  font-size: 10px;
+  color: #777;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.captured-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.captured-piece {
+  font-size: 10px;
+  padding: 1px 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  color: #bbb;
+}
+
+/* Game Over */
+.game-over-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 0.5s ease;
+}
+
+.game-over-card {
+  background: linear-gradient(135deg, #1a1a3e, #0d0d2a);
+  border: 2px solid #ffd700;
+  border-radius: 24px;
+  padding: 40px 56px;
+  text-align: center;
+  box-shadow: 0 0 80px rgba(255, 215, 0, 0.25);
+  animation: scaleIn 0.5s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.confetti-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti {
+  position: absolute;
+  top: -10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  animation: confettiFall 3s ease-in-out infinite;
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-10px) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(400px) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.winner-text {
+  font-size: 30px;
+  color: #ffd700;
+  margin: 0 0 10px 0;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+  position: relative;
+  z-index: 1;
+}
+
+.game-over-sub {
+  color: #aaa;
+  margin: 0 0 20px 0;
+  font-size: 15px;
+  position: relative;
+  z-index: 1;
+}
+
+.game-over-buttons {
+  position: relative;
+  z-index: 1;
+}
+
+.play-again-btn {
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #000;
+  border: none;
+  padding: 12px 36px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: inherit;
+}
+
+.play-again-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 24px rgba(255, 215, 0, 0.5);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hud-top {
+    padding: 6px 10px;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+  }
+
+  .hud-top-left,
+  .hud-top-right {
+    gap: 6px;
+  }
+
+  .hud-player {
+    position: fixed;
+    top: auto;
+    min-width: 130px;
+    padding: 8px;
+  }
+
+  .hud-player-red {
+    left: 6px;
+    bottom: 6px;
+  }
+
+  .hud-player-blue {
+    right: 6px;
+    bottom: 6px;
+  }
+
+  .game-over-card {
+    padding: 28px 36px;
+    margin: 16px;
+  }
+
+  .winner-text {
+    font-size: 22px;
+  }
+
+  .turn-indicator {
+    font-size: 12px;
+    padding: 4px 12px;
+  }
+}

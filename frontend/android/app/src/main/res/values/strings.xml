@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Cờ Thú 3D</string>
+    <string name="title_activity_main">Cờ Thú 3D</string>
+    <string name="package_name">com.cothu.game</string>
+    <string name="custom_url_scheme">com.cothu.game</string>
+</resources>
