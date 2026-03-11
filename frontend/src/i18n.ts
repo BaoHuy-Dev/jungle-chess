@@ -86,6 +86,16 @@ const translations = {
 
         // Language
         'lang.switch': '🇬🇧 English',
+
+        // Login
+        'login.welcome': 'Đăng nhập',
+        'login.desc': 'Đăng nhập để bắt đầu chiến đấu',
+        'login.google': 'Đăng nhập bằng Google',
+        'login.facebook': 'Đăng nhập bằng Facebook',
+        'login.guest': 'Chơi thử không cần đăng nhập',
+        'login.or': 'hoặc',
+        'login.footer': 'Bảo mật bởi OAuth2 • Không lưu mật khẩu',
+        'login.logout': 'Đăng xuất',
     },
     en: {
         // Main Menu
@@ -171,6 +181,16 @@ const translations = {
 
         // Language
         'lang.switch': '🇻🇳 Tiếng Việt',
+
+        // Login
+        'login.welcome': 'Sign In',
+        'login.desc': 'Sign in to start battling',
+        'login.google': 'Sign in with Google',
+        'login.facebook': 'Sign in with Facebook',
+        'login.guest': 'Play as guest without signing in',
+        'login.or': 'or',
+        'login.footer': 'Secured by OAuth2 • No passwords stored',
+        'login.logout': 'Logout',
     },
 } as const;
 

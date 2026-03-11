@@ -1,0 +1,89 @@
+# ===================================================================
+# Cờ Thú Game - Application Configuration
+# ===================================================================
+
+server:
+  port: 8080
+
+spring:
+  application:
+    name: co-thu-game
+
+  # --- Database (H2 for dev, PostgreSQL for prod) ---
+  datasource:
+    url: jdbc:h2:mem:cothudb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  # --- OAuth2 Social Login ---
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:placeholder}
+            client-secret: ${GOOGLE_CLIENT_SECRET:placeholder}
+            scope: openid, profile, email
+          # Facebook - temporarily disabled
+          # facebook:
+          #   client-id: ${FACEBOOK_CLIENT_ID:placeholder}
+          #   client-secret: ${FACEBOOK_CLIENT_SECRET:placeholder}
+          #   scope: email, public_profile
+        # provider:
+        #   facebook:
+        #     user-info-uri: https://graph.facebook.com/me?fields=id,name,email,picture.width(250)
+
+# --- App Custom Config ---
+app:
+  jwt:
+    secret: ${JWT_SECRET:aW50ZXJuYWwtZGV2LXNlY3JldC1rZXktY2hhbmdlLWluLXByb2R1Y3Rpb24tMTIzNDU2Nzg5MA==}
+    expiration-ms: 86400000
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:3000}
+
+---
+# ===================================================================
+# Production Profile (Neon PostgreSQL + Render)
+# ===================================================================
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: ${DATABASE_URL}
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 20000
+
+  h2:
+    console:
+      enabled: false
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { useUIStore } from '../../store/gameStore';
+import { useAuthStore } from '../../store/authStore';
 import { api } from '../../services/api';
 import { SoundManager } from '../../services/SoundManager';
 import { useLanguage } from '../../i18n';
@@ -9,6 +10,7 @@ import './MainMenu.css';
 export function MainMenu() {
     const { setGameState, setAIGame } = useGameStore();
     const { setPage } = useUIStore();
+    const { user, logout } = useAuthStore();
     const { t, toggleLanguage } = useLanguage();
     const [joinCode, setJoinCode] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -67,6 +69,46 @@ export function MainMenu() {
                 <button className="lang-toggle-btn" onClick={toggleLanguage}>
                     {t('lang.switch')}
                 </button>
+
+                {/* User Profile Bar */}
+                {user && (
+                    <div style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        gap: 12, marginBottom: 16, padding: '10px 20px',
+                        background: 'rgba(255,255,255,0.06)', borderRadius: 12,
+                        border: '1px solid rgba(255,255,255,0.08)',
+                    }}>
+                        {user.avatarUrl && (
+                            <img src={user.avatarUrl} alt={user.name}
+                                style={{
+                                    width: 36, height: 36, borderRadius: '50%',
+                                    border: '2px solid rgba(255,215,0,0.5)',
+                                }}
+                            />
+                        )}
+                        <span style={{
+                            color: 'rgba(255,255,255,0.85)', fontWeight: 600,
+                            fontSize: '0.9rem',
+                        }}>
+                            {user.name}
+                        </span>
+                        <button onClick={logout} style={{
+                            marginLeft: 'auto', padding: '6px 14px',
+                            background: 'rgba(255,107,107,0.15)', border: '1px solid rgba(255,107,107,0.3)',
+                            color: '#ff6b6b', borderRadius: 8, cursor: 'pointer',
+                            fontSize: '0.8rem', transition: 'all 0.2s',
+                        }}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.background = 'rgba(255,107,107,0.25)';
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.background = 'rgba(255,107,107,0.15)';
+                            }}
+                        >
+                            {t('login.logout')}
+                        </button>
+                    </div>
+                )}
 
                 {/* Logo */}
                 <div className="menu-logo">

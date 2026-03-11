@@ -1,5 +1,7 @@
 import { useMemo, useRef, type ReactNode } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { MeshReflectorMaterial } from '@react-three/drei';
+import { LayerMaterial, Color, Noise, Depth } from 'lamina/vanilla';
 import * as THREE from 'three';
 
 // ─── Jungle vine decoration along board edges ───────────────────────
@@ -33,28 +35,45 @@ function BoardVines() {
         return v;
     }, []);
 
+    const vineMats = useMemo(() => {
+        return {
+            stem: new LayerMaterial({
+                lighting: 'standard', roughness: 0.9, color: '#2a5a1a',
+                layers: [new Noise({ colorA: '#1a3a0a', colorB: '#2a5a1a', type: 'perlin', scale: 10, mode: 'multiply', alpha: 0.7 })]
+            }),
+            leafA: new LayerMaterial({
+                lighting: 'standard', roughness: 0.85, color: '#1a6a1a',
+                layers: [new Noise({ colorA: '#0a3a0a', colorB: '#2a8a2a', type: 'cell', scale: 20, mode: 'multiply', alpha: 0.8 })]
+            }),
+            leafB: new LayerMaterial({
+                lighting: 'standard', roughness: 0.85, color: '#2a7a2a',
+                layers: [new Noise({ colorA: '#1a4a1a', colorB: '#3aaa3a', type: 'cell', scale: 20, mode: 'multiply', alpha: 0.8 })]
+            }),
+            mossBase: new LayerMaterial({
+                lighting: 'standard', roughness: 0.95, color: '#2a5a20',
+                layers: [new Noise({ colorA: '#1a3a10', colorB: '#3a8a30', type: 'perlin', scale: 15, mode: 'multiply', alpha: 0.9 })]
+            })
+        };
+    }, []);
+
     return (
         <group ref={vineRef}>
             {vines.map((v, i) => (
                 <group key={`vine-${i}`} position={[v.x, 0.15, v.z]} rotation={[0, v.rotY, 0]} scale={v.scale}>
                     {/* Vine stem */}
-                    <mesh castShadow>
+                    <mesh castShadow material={vineMats.stem}>
                         <cylinderGeometry args={[0.008, 0.005, v.len, 4]} />
-                        <meshStandardMaterial color="#2a5a1a" roughness={0.9} />
                     </mesh>
                     {/* Leaf clusters */}
-                    <mesh position={[0.02, v.len * 0.3, 0.01]} rotation={[0.3, 0, 0.5]}>
+                    <mesh position={[0.02, v.len * 0.3, 0.01]} rotation={[0.3, 0, 0.5]} material={vineMats.leafA}>
                         <sphereGeometry args={[0.025, 4, 4]} />
-                        <meshStandardMaterial color="#1a6a1a" roughness={0.85} />
                     </mesh>
-                    <mesh position={[-0.02, v.len * 0.15, -0.01]} rotation={[-0.2, 0, -0.4]}>
+                    <mesh position={[-0.02, v.len * 0.15, -0.01]} rotation={[-0.2, 0, -0.4]} material={vineMats.leafB}>
                         <sphereGeometry args={[0.02, 4, 4]} />
-                        <meshStandardMaterial color="#2a7a2a" roughness={0.85} />
                     </mesh>
                     {/* Moss spot at base */}
-                    <mesh position={[0, -v.len * 0.4, 0]}>
+                    <mesh position={[0, -v.len * 0.4, 0]} material={vineMats.mossBase}>
                         <sphereGeometry args={[0.03, 4, 3]} />
-                        <meshStandardMaterial color="#2a5a20" roughness={0.95} />
                     </mesh>
                 </group>
             ))}
@@ -65,67 +84,66 @@ function BoardVines() {
 const CELL_SIZE = 1.1;
 
 export function Board3D({ boardLayout }: { boardLayout: number[][] }) {
-    const waterRef = useRef<THREE.Mesh>(null);
     const runeRefs = useRef<THREE.Mesh[]>([]);
 
-    // Ancient Stone Materials
+    // Highly Detailed Procedural Stone Materials using Lamina
     const materials = useMemo(() => {
         return {
-            stoneTop: new THREE.MeshStandardMaterial({ color: '#4a4a42', roughness: 0.85, metalness: 0.15 }),
-            stoneSide: new THREE.MeshStandardMaterial({ color: '#3a3a32', roughness: 0.9, metalness: 0.1 }),
-            stoneDark: new THREE.MeshStandardMaterial({ color: '#2a2a24', roughness: 0.95, metalness: 0.05 }),
-            mossStone: new THREE.MeshStandardMaterial({ color: '#3d4a32', roughness: 0.9, metalness: 0.05 }),
-            trapStone: new THREE.MeshStandardMaterial({ color: '#2d2d28', roughness: 0.8, metalness: 0.2 }),
-            denStone: new THREE.MeshStandardMaterial({ color: '#3d3d35', roughness: 0.75, metalness: 0.25 }),
-            borderStone: new THREE.MeshStandardMaterial({ color: '#333330', roughness: 0.9, metalness: 0.1 }),
+            stoneTop: new LayerMaterial({
+                lighting: 'standard', roughness: 0.85, metalness: 0.05,
+                layers: [
+                    new Color({ color: '#e6ded0' }),
+                    new Noise({ colorA: '#d0c6b5', colorB: '#c0b4a2', type: 'perlin', scale: 8, mode: 'multiply', alpha: 0.6 }),
+                    new Noise({ colorA: '#666666', colorB: '#ffffff', type: 'white', scale: 50, mode: 'multiply', alpha: 0.05 })
+                ]
+            }),
+            stoneSide: new LayerMaterial({
+                lighting: 'standard', roughness: 0.9, metalness: 0.05,
+                layers: [
+                    new Color({ color: '#d0c6b5' }),
+                    new Noise({ colorA: '#b0a492', colorB: '#a09482', type: 'cell', scale: 6, mode: 'multiply', alpha: 0.8 }),
+                    new Depth({ colorA: '#807462', colorB: '#d0c6b5', alpha: 0.9, mode: 'multiply', near: -0.5, far: 0.5 })
+                ]
+            }),
+            stoneDark: new LayerMaterial({
+                lighting: 'standard', roughness: 0.95, metalness: 0.05,
+                layers: [
+                    new Color({ color: '#b0a492' }),
+                    new Noise({ colorA: '#908472', colorB: '#807462', type: 'cell', scale: 5, mode: 'multiply', alpha: 0.7 })
+                ]
+            }),
+            mossStone: new LayerMaterial({
+                lighting: 'standard', roughness: 0.85, metalness: 0.05,
+                layers: [
+                    new Color({ color: '#d8e2c8' }),
+                    new Noise({ colorA: '#d0c6b5', colorB: '#b0a492', type: 'perlin', scale: 8, mode: 'multiply', alpha: 0.5 }),
+                    new Noise({ colorA: '#2a5a20', colorB: '#4a7a30', type: 'perlin', scale: 4, mode: 'multiply', alpha: 0.6 })
+                ]
+            }),
+            trapStone: new LayerMaterial({
+                lighting: 'standard', roughness: 0.75, metalness: 0.1,
+                layers: [
+                    new Color({ color: '#cdc3b1' }),
+                    new Noise({ colorA: '#bdb3a1', colorB: '#ada391', type: 'perlin', scale: 10, mode: 'multiply', alpha: 0.5 })
+                ]
+            }),
+            denStone: new LayerMaterial({
+                lighting: 'standard', roughness: 0.6, metalness: 0.15,
+                layers: [
+                    new Color({ color: '#f0e8dc' }),
+                    new Noise({ colorA: '#e0d8cc', colorB: '#c0b8ac', type: 'simplex', scale: 12, mode: 'multiply', alpha: 0.3 })
+                ]
+            }),
+            borderStone: new LayerMaterial({
+                lighting: 'standard', roughness: 0.95, metalness: 0.05, color: '#908675',
+                layers: [
+                    new Noise({ colorA: '#605645', colorB: '#706655', type: 'cell', scale: 3, mode: 'multiply', alpha: 0.7 })
+                ]
+            })
         };
     }, []);
 
-    // Mystical Water Shader - dark fantasy river
-    const waterShader = useMemo(() => ({
-        uniforms: {
-            uTime: { value: 0 },
-        },
-        vertexShader: `
-            varying vec2 vUv;
-            varying vec3 vPosition;
-            uniform float uTime;
-            void main() {
-                vUv = uv;
-                vPosition = position;
-                vec3 pos = position;
-                pos.z += sin(pos.x * 4.0 + uTime * 1.5) * 0.06;
-                pos.z += cos(pos.y * 3.0 + uTime * 2.0) * 0.03;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-            }
-        `,
-        fragmentShader: `
-            uniform float uTime;
-            varying vec2 vUv;
-            varying vec3 vPosition;
-            void main() {
-                vec2 p = vUv * 8.0;
-                float c = sin(p.x * 2.5 + uTime * 0.8) * cos(p.y * 2.5 + uTime * 1.2) * 0.5 + 0.5;
-                float c2 = cos(p.x * 3.5 - uTime * 0.6) * sin(p.y * 3.5 + uTime * 0.5) * 0.5 + 0.5;
-                float foam = smoothstep(0.85, 1.0, c * c2) * 0.3;
-                vec3 deepColor = vec3(0.02, 0.08, 0.15);
-                vec3 shallowColor = vec3(0.05, 0.2, 0.35);
-                vec3 glowColor = vec3(0.1, 0.4, 0.5);
-                vec3 finalColor = mix(deepColor, shallowColor, c * 0.6);
-                finalColor += glowColor * c2 * 0.2;
-                finalColor += vec3(foam);
-                float shimmer = sin(uTime * 3.0 + p.x * 5.0 + p.y * 5.0) * 0.03;
-                finalColor += vec3(shimmer);
-                gl_FragColor = vec4(finalColor, 0.92);
-            }
-        `
-    }), []);
-
     useFrame((state) => {
-        if (waterRef.current && waterRef.current.material) {
-            const mat = waterRef.current.material as THREE.ShaderMaterial;
-            if (mat.uniforms?.uTime) mat.uniforms.uTime.value = state.clock.elapsedTime;
-        }
         // Animate rune glows
         const t = state.clock.elapsedTime;
         runeRefs.current.forEach((mesh, i) => {
@@ -146,7 +164,7 @@ export function Board3D({ boardLayout }: { boardLayout: number[][] }) {
         const addBlock = (x: number, y: number, z: number, topMat: THREE.Material, sideMat: THREE.Material, key: string) => {
             b.push(
                 <mesh key={key} position={[x, y, z]} receiveShadow castShadow>
-                    <boxGeometry args={[CELL_SIZE, 0.5, CELL_SIZE]} />
+                    <boxGeometry args={[CELL_SIZE, y < 0 ? 0.5 : 0.6, CELL_SIZE]} />
                     <primitive attach="material-0" object={sideMat} />
                     <primitive attach="material-1" object={sideMat} />
                     <primitive attach="material-2" object={topMat} />
@@ -265,10 +283,22 @@ export function Board3D({ boardLayout }: { boardLayout: number[][] }) {
 
     return (
         <group>
-            {/* Dark Mystical River Water */}
-            <mesh ref={waterRef} position={[0, -0.25, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-                <planeGeometry args={[7 * CELL_SIZE + 2, 9 * CELL_SIZE + 2, 48, 48]} />
-                <shaderMaterial args={[waterShader]} transparent depthWrite={false} />
+            {/* Reflective Mirror Water */}
+            <mesh position={[0, -0.25, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <planeGeometry args={[7 * CELL_SIZE + 2, 9 * CELL_SIZE + 2, 1, 1]} />
+                <MeshReflectorMaterial
+                    blur={[300, 100]}
+                    resolution={1024}
+                    mixBlur={1}
+                    mixStrength={80}
+                    roughness={0.1}
+                    depthScale={1.2}
+                    minDepthThreshold={0.4}
+                    maxDepthThreshold={1.4}
+                    color="#205060"
+                    metalness={0.6}
+                    mirror={0.8}
+                />
             </mesh>
 
             {/* Dark Abyss below water */}
