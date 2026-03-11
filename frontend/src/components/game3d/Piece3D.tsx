@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useGLTF, Clone } from '@react-three/drei';
 import * as THREE from 'three';
@@ -119,11 +119,13 @@ const MATERIALS = {
 export function Piece3D({
     piece,
     isActive,
+    isMobile,
     onClick,
     onDoubleClick,
 }: {
     piece: PieceData;
     isActive: boolean;
+    isMobile?: boolean;
     onClick: () => void;
     onDoubleClick?: () => void;
 }) {
@@ -131,6 +133,20 @@ export function Piece3D({
     const runeRef = useRef<THREE.Mesh>(null);
     const targetRotRef = useRef<number>(piece.side === 'RED' ? 0 : Math.PI);
     const [hovered, setHovered] = useState(false);
+
+    // Localize materials to prevent shared state flickering in useFrame
+    const localMaterials = useMemo(() => {
+        const sideMaterials = piece.side === 'RED'
+            ? { base: MATERIALS.redBase, rune: MATERIALS.redRune, signet: MATERIALS.redSignet }
+            : { base: MATERIALS.blueBase, rune: MATERIALS.blueRune, signet: MATERIALS.blueSignet };
+
+        return {
+            base: sideMaterials.base.clone(),
+            rune: sideMaterials.rune.clone(),
+            signet: sideMaterials.signet.clone(),
+            stoneTop: MATERIALS.stoneTop.clone(),
+        };
+    }, [piece.side]);
 
     const targetX = (piece.col - 3) * CELL_SIZE;
     const targetZ = (piece.row - 4) * CELL_SIZE;
@@ -175,8 +191,8 @@ export function Piece3D({
             g.rotation.y += diff * delta * 15;
         }
 
-        // Warrior breathing - subtle power pulse
-        const breathe = 1 + Math.sin(t * 1.5 + piece.col * 0.7) * 0.015;
+        // Warrior breathing - subtle power pulse (Disabled on mobile)
+        const breathe = isMobile ? 1 : (1 + Math.sin(t * 1.5 + piece.col * 0.7) * 0.015);
         g.scale.set(breathe * baseScale, breathe * baseScale, breathe * baseScale);
 
         // Animated rune glow
@@ -189,8 +205,6 @@ export function Piece3D({
 
     if (!piece.alive && !isActive) return null;
 
-    const baseMaterial = piece.side === 'RED' ? MATERIALS.redBase : MATERIALS.blueBase;
-    const runeMaterial = piece.side === 'RED' ? MATERIALS.redRune : MATERIALS.blueRune;
     const sideColor = piece.side === 'RED' ? '#ff3333' : '#3388ff';
 
     return (
@@ -217,19 +231,21 @@ export function Piece3D({
             }}
         >
             {/* Stone Chess Base - carved ancient stone pedestal */}
-            <mesh castShadow receiveShadow position={[0, 0.03, 0]}>
-                <cylinderGeometry args={[0.32, 0.38, 0.06, 8]} />
-                <primitive object={baseMaterial} attach="material" />
+            <mesh castShadow={!isMobile} receiveShadow={!isMobile} position={[0, 0.03, 0]}>
+                <cylinderGeometry args={[0.32, 0.38, 0.06, isMobile ? 6 : 8]} />
+                <primitive object={localMaterials.base} attach="material" />
             </mesh>
-            {/* Second tier base */}
-            <mesh castShadow receiveShadow position={[0, 0.07, 0]}>
-                <cylinderGeometry args={[0.28, 0.32, 0.04, 8]} />
-                <meshStandardMaterial color="#2a2a2a" metalness={0.4} roughness={0.6} />
-            </mesh>
+            {/* Second tier base - Skipped on mobile */}
+            {!isMobile && (
+                <mesh castShadow receiveShadow position={[0, 0.07, 0]}>
+                    <cylinderGeometry args={[0.28, 0.32, 0.04, 8]} />
+                    <meshStandardMaterial color="#2a2a2a" metalness={0.4} roughness={0.6} />
+                </mesh>
+            )}
 
             {/* Ancient engravings on base - decorative ring */}
             <mesh position={[0, 0.035, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                <ringGeometry args={[0.33, 0.37, 8]} />
+                <ringGeometry args={[0.33, 0.37, isMobile ? 6 : 8]} />
                 <meshStandardMaterial
                     color={accent.color}
                     emissive={accent.emissive}
@@ -239,16 +255,16 @@ export function Piece3D({
                 />
             </mesh>
 
-            {/* Inner stone disc with dark surface */}
-            <mesh receiveShadow position={[0, 0.091, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                <circleGeometry args={[0.22, 32]} />
-                <primitive object={MATERIALS.stoneTop} attach="material" />
+            {/* Inner stone disc with dark surface - Increased Y gap for z-fighting */}
+            <mesh receiveShadow={!isMobile} position={[0, isMobile ? 0.12 : 0.091, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <circleGeometry args={[0.22, isMobile ? 16 : 32]} />
+                <primitive object={localMaterials.stoneTop} attach="material" />
             </mesh>
 
-            {/* Glowing Rune Ring - animated magical engravings */}
-            <mesh ref={runeRef} position={[0, 0.092, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            {/* Glowing Rune Ring - Increased Y gap for z-fighting */}
+            <mesh ref={runeRef} position={[0, isMobile ? 0.13 : 0.092, 0]} rotation={[-Math.PI / 2, 0, 0]}>
                 <ringGeometry args={[0.22, 0.27, 6]} />
-                <primitive object={runeMaterial} attach="material" />
+                <primitive object={localMaterials.rune} attach="material" />
             </mesh>
 
             {/* Armor collar ring around base of standee */}

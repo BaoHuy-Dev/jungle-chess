@@ -184,6 +184,7 @@ function SceneContent({ onInspect }: { onInspect: (piece: PieceData) => void }) 
                     key={`${piece.type}-${piece.side}-${idx}`}
                     piece={piece}
                     isActive={selectedPiece?.row === piece.row && selectedPiece?.col === piece.col}
+                    isMobile={isMobile}
                     onClick={() => handlePieceClick(piece)}
                     onDoubleClick={() => onInspect(piece)}
                 />
