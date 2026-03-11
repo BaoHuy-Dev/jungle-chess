@@ -1,6 +1,7 @@
 package com.cothu.config;
 
 import com.cothu.service.CustomOAuth2UserService;
+import com.cothu.service.CustomOidcUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
