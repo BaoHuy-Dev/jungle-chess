@@ -10,9 +10,11 @@ export function LoginPage() {
         window.location.href = `${API_BASE}/oauth2/authorization/google`;
     };
 
+    /* Temporarily commented out to fix unused variable error in build
     const handleFacebookLogin = () => {
         window.location.href = `${API_BASE}/oauth2/authorization/facebook`;
     };
+    */
 
     return (
         <div className="login-page">
