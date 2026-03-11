@@ -14,6 +14,15 @@ import { PieceInspector } from './PieceInspector';
 
 const CELL_SIZE = 1.1;
 
+const useMobile = () => {
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    useFrame(() => {
+        const mobile = window.innerWidth < 768;
+        if (mobile !== isMobile) setIsMobile(mobile);
+    });
+    return isMobile;
+};
+
 const MoveHighlight3D = ({ row, col, isCapture }: { row: number; col: number; isCapture: boolean }) => (
     <mesh position={[(col - 3) * CELL_SIZE, 0.01, (row - 4) * CELL_SIZE]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.35, 0.45, 32]} />
@@ -27,6 +36,7 @@ const MoveHighlight3D = ({ row, col, isCapture }: { row: number; col: number; is
 function SceneContent({ onInspect }: { onInspect: (piece: PieceData) => void }) {
     const { gameState, selectedPiece, validMoves, selectPiece, clearSelection, setGameState } = useGameStore();
     const prevTurnRef = useRef<string | null>(null);
+    const isMobile = useMobile();
 
     // Track turn changes for sound
     useFrame(() => {
@@ -58,25 +68,18 @@ function SceneContent({ onInspect }: { onInspect: (piece: PieceData) => void }) 
             const isValidTarget = validMoves.some((m) => m[0] === piece.row && m[1] === piece.col);
             if (isValidTarget) {
                 try {
-                    const resp = await fetch(`http://localhost:8080/api/game/${gameState.gameId}/move`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            gameId: gameState.gameId,
-                            fromRow: selectedPiece.row,
-                            fromCol: selectedPiece.col,
-                            toRow: piece.row,
-                            toCol: piece.col,
-                        }),
-                    });
-                    if (resp.ok) {
-                        const newState = await resp.json();
-                        setGameState(newState);
-                        SoundManager.playCapture();
+                    const newState = await api.makeMove(
+                        gameState.gameId,
+                        selectedPiece.row,
+                        selectedPiece.col,
+                        piece.row,
+                        piece.col
+                    );
+                    setGameState(newState);
+                    SoundManager.playCapture();
 
-                        if (newState.status === 'FINISHED') {
-                            setTimeout(() => SoundManager.playWin(), 500);
-                        }
+                    if (newState.status === 'FINISHED') {
+                        setTimeout(() => SoundManager.playWin(), 500);
                     }
                 } catch (e) {
                     console.error('Move failed:', e);
@@ -95,25 +98,18 @@ function SceneContent({ onInspect }: { onInspect: (piece: PieceData) => void }) 
         const isValidMove = validMoves.some((m) => m[0] === row && m[1] === col);
         if (isValidMove) {
             try {
-                const resp = await fetch(`http://localhost:8080/api/game/${gameState.gameId}/move`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        gameId: gameState.gameId,
-                        fromRow: selectedPiece.row,
-                        fromCol: selectedPiece.col,
-                        toRow: row,
-                        toCol: col,
-                    }),
-                });
-                if (resp.ok) {
-                    const newState = await resp.json();
-                    setGameState(newState);
-                    SoundManager.playMove();
+                const newState = await api.makeMove(
+                    gameState.gameId,
+                    selectedPiece.row,
+                    selectedPiece.col,
+                    row,
+                    col
+                );
+                setGameState(newState);
+                SoundManager.playMove();
 
-                    if (newState.status === 'FINISHED') {
-                        setTimeout(() => SoundManager.playWin(), 500);
-                    }
+                if (newState.status === 'FINISHED') {
+                    setTimeout(() => SoundManager.playWin(), 500);
                 }
             } catch (e) {
                 console.error('Move failed:', e);
@@ -144,8 +140,8 @@ function SceneContent({ onInspect }: { onInspect: (piece: PieceData) => void }) 
                 position={[8, 18, 8]}
                 intensity={1.1}
                 color="#ffeedd"
-                castShadow
-                shadow-mapSize={[2048, 2048]}
+                castShadow={!isMobile}
+                shadow-mapSize={isMobile ? [512, 512] : [2048, 2048]}
                 shadow-camera-far={40}
                 shadow-camera-left={-10}
                 shadow-camera-right={10}
@@ -165,7 +161,7 @@ function SceneContent({ onInspect }: { onInspect: (piece: PieceData) => void }) 
             <Environment preset="forest" blur={0.6} />
 
             {/* Board */}
-            <Board3D boardLayout={gameState.boardLayout} />
+            <Board3D boardLayout={gameState.boardLayout} isMobile={isMobile} />
 
             {/* Board decorations (trees, rocks) */}
             <BoardDecorations />
@@ -173,14 +169,14 @@ function SceneContent({ onInspect }: { onInspect: (piece: PieceData) => void }) 
             {/* Grass tufts on ground cells */}
             <GrassTufts boardLayout={gameState.boardLayout} />
 
-            {/* Ambient jungle particles */}
-            <AmbientFireflies count={40} />
+            {/* Ambient jungle particles - Reduced count on mobile */}
+            <AmbientFireflies count={isMobile ? 15 : 40} />
 
-            {/* Jungle mist low-lying fog */}
-            <JungleMist count={25} />
+            {/* Jungle mist low-lying fog - Reduced count on mobile */}
+            <JungleMist count={isMobile ? 10 : 25} />
 
-            {/* Floating jungle spores */}
-            <JungleSpores count={15} />
+            {/* Floating jungle spores - Reduced count on mobile */}
+            <JungleSpores count={isMobile ? 5 : 15} />
 
             {/* Pieces */}
             {gameState.pieces.map((piece, idx) => (
@@ -240,12 +236,14 @@ function SceneContent({ onInspect }: { onInspect: (piece: PieceData) => void }) 
                 dampingFactor={0.05}
             />
 
-            {/* Post Processing - Bright and Crisp */}
-            <EffectComposer>
-                <N8AO aoRadius={0.5} intensity={1.5} />
-                <Bloom luminanceThreshold={0.8} mipmapBlur intensity={0.4} />
-                <Vignette eskil={false} offset={0.1} darkness={0.4} />
-            </EffectComposer>
+            {/* Post Processing - Disabled on Mobile for performance */}
+            {!isMobile && (
+                <EffectComposer>
+                    <N8AO aoRadius={0.5} intensity={1.5} />
+                    <Bloom luminanceThreshold={0.8} mipmapBlur intensity={0.4} />
+                    <Vignette eskil={false} offset={0.1} darkness={0.4} />
+                </EffectComposer>
+            )}
         </>
     );
 }

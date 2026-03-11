@@ -83,7 +83,7 @@ function BoardVines() {
 
 const CELL_SIZE = 1.1;
 
-export function Board3D({ boardLayout }: { boardLayout: number[][] }) {
+export function Board3D({ boardLayout, isMobile }: { boardLayout: number[][]; isMobile?: boolean }) {
     const runeRefs = useRef<THREE.Mesh[]>([]);
 
     // Highly Detailed Procedural Stone Materials using Lamina
@@ -283,22 +283,32 @@ export function Board3D({ boardLayout }: { boardLayout: number[][] }) {
 
     return (
         <group>
-            {/* Reflective Mirror Water */}
+            {/* Reflective Mirror Water - Simplified on mobile for performance */}
             <mesh position={[0, -0.25, 0]} rotation={[-Math.PI / 2, 0, 0]}>
                 <planeGeometry args={[7 * CELL_SIZE + 2, 9 * CELL_SIZE + 2, 1, 1]} />
-                <MeshReflectorMaterial
-                    blur={[300, 100]}
-                    resolution={1024}
-                    mixBlur={1}
-                    mixStrength={80}
-                    roughness={0.1}
-                    depthScale={1.2}
-                    minDepthThreshold={0.4}
-                    maxDepthThreshold={1.4}
-                    color="#205060"
-                    metalness={0.6}
-                    mirror={0.8}
-                />
+                {isMobile ? (
+                    <meshStandardMaterial
+                        color="#205060"
+                        metalness={0.6}
+                        roughness={0.2}
+                        transparent
+                        opacity={0.8}
+                    />
+                ) : (
+                    <MeshReflectorMaterial
+                        blur={[300, 100]}
+                        resolution={1024}
+                        mixBlur={1}
+                        mixStrength={80}
+                        roughness={0.1}
+                        depthScale={1.2}
+                        minDepthThreshold={0.4}
+                        maxDepthThreshold={1.4}
+                        color="#205060"
+                        metalness={0.6}
+                        mirror={0.8}
+                    />
+                )}
             </mesh>
 
             {/* Dark Abyss below water */}
