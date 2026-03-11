@@ -2,7 +2,8 @@ import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import type { GameStateData } from '../store/gameStore';
 
-const WS_URL = 'http://localhost:8080/ws';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const WS_URL = API_BASE.replace(/^http/, 'ws') + '/ws';
 
 let stompClient: Client | null = null;
 
